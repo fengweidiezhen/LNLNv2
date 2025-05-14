@@ -16,7 +16,7 @@ base:
 
 dataset:
   datasetName: mosi
-  dataPath: /CMU-MOSI/Processed/unaligned_50.pkl
+  dataPath: E:\LNLNv2\CMU-MOSI\Processed\unaligned_50.pkl
    
 
 model:    
@@ -83,4 +83,4 @@ model:
     
     regression:
       input_dim: 128
-      out_dim: 16
+      out_dim: 1
