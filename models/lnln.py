@@ -123,10 +123,10 @@ class LNLN(nn.Module):
 
 
     def forward(self, complete_input, incomplete_input):
-        vision, audio, language = complete_input
-        vision_m, audio_m, language_m = incomplete_input
+        audio, language = complete_input
+        audio_m, language_m = incomplete_input
 
-        b = vision_m.size(0)
+        b = audio_m.size(0)
 
         # h_1_v = self.proj_v(vision_m)[:, :8] # to be delete
         h_1_a = self.proj_a(audio_m)[:, :8]
@@ -149,7 +149,7 @@ class LNLN(nn.Module):
         output = self.dmml[3](torch.mean(feat[:, 1:], dim=1))
 
         rec_feats, complete_feats, effectiveness_discriminator_out = None, None, None
-        if (vision is not None) and (audio is not None) and (language is not None):
+        if (audio is not None) and (language is not None):
             # Reconstruction
             # for layer in self.reconstructor:
             rec_feat_a = self.reconstructor[0](h_1_a)

@@ -57,13 +57,13 @@ class PreNorm_hyper(nn.Module):
         self.norm4 = nn.LayerNorm(dim)
         self.fn = fn
 
-    def forward(self, h_dominate, h_a, h_v, h_hyper):
+    def forward(self, h_dominate, h_a, h_hyper):
         h_dominate = self.norm1(h_dominate)
         h_a = self.norm2(h_a)
-        h_v = self.norm3(h_v)
+        # h_v = self.norm3(h_v)
         h_hyper = self.norm4(h_hyper)
 
-        return self.fn(h_dominate, h_a, h_v, h_hyper)
+        return self.fn(h_dominate, h_a, h_hyper)
 
 
 class FeedForward(nn.Module):
@@ -129,38 +129,38 @@ class HhyperLearningLayer(nn.Module):
         self.attend = nn.Softmax(dim = -1)
         self.to_q = nn.Linear(dim, inner_dim, bias=False)
         self.to_k_ta = nn.Linear(dim, inner_dim, bias=False)
-        self.to_k_tv = nn.Linear(dim, inner_dim, bias=False)
+        # self.to_k_tv = nn.Linear(dim, inner_dim, bias=False)
         self.to_v_ta = nn.Linear(dim, inner_dim, bias=False)
-        self.to_v_tv = nn.Linear(dim, inner_dim, bias=False)
+        # self.to_v_tv = nn.Linear(dim, inner_dim, bias=False)
 
         self.to_out = nn.Sequential(
             nn.Linear(inner_dim, dim, bias=True),
             nn.Dropout(dropout)
         ) if project_out else nn.Identity()
 
-    def forward(self, h_dominate, h_a, h_v, h_hyper):
+    def forward(self, h_dominate, h_a, h_hyper):
         h = self.heads
 
         q = self.to_q(h_dominate)
         k_a = self.to_k_ta(h_a)
-        k_v = self.to_k_tv(h_v)
+        # k_v = self.to_k_tv(h_v)
 
         v_a = self.to_v_ta(h_a)
-        v_v = self.to_v_tv(h_v)
+        # v_v = self.to_v_tv(h_v)
 
-        q, k_a, k_v, v_a, v_v = map(lambda t: rearrange(t, 'b n (h d) -> b h n d', h=h), (q, k_a, k_v, v_a, v_v))
+        q, k_a, v_a = map(lambda t: rearrange(t, 'b n (h d) -> b h n d', h=h), (q, k_a, v_a))
 
         dots_q_ka = einsum('b h i d, b h j d -> b h i j', q, k_a) * self.scale
         attn_q_ka = self.attend(dots_q_ka)
         out_q_ka = einsum('b h i j, b h j d -> b h i d', attn_q_ka, v_a)
         out_q_ka = rearrange(out_q_ka, 'b h n d -> b n (h d)')
 
-        dots_q_kv = einsum('b h i d, b h j d -> b h i j', q, k_v) * self.scale
-        attn_q_kv = self.attend(dots_q_kv)
-        out_q_kv = einsum('b h i j, b h j d -> b h i d', attn_q_kv, v_v)
-        out_q_kv = rearrange(out_q_kv, 'b h n d -> b n (h d)')
+        #dots_q_kv = einsum('b h i d, b h j d -> b h i j', q, k_v) * self.scale
+        #attn_q_kv = self.attend(dots_q_kv)
+        #out_q_kv = einsum('b h i j, b h j d -> b h i d', attn_q_kv, v_v)
+        #out_q_kv = rearrange(out_q_kv, 'b h n d -> b n (h d)')
 
-        h_hyper_shift = self.to_out(out_q_ka + out_q_kv)
+        h_hyper_shift = self.to_out(out_q_ka)
         h_hyper += h_hyper_shift
 
         return h_hyper
@@ -175,9 +175,10 @@ class HhyperLearningEncoder(nn.Module):
                 PreNorm_hyper(dim, HhyperLearningLayer(dim, heads = heads, dim_head = dim_head, dropout = dropout))
             ]))
 
-    def forward(self, h_domonate_list, h_a, h_v, h_hyper):
+    # delete h_v
+    def forward(self, h_domonate_list, h_a, h_hyper):
         for i, attn in enumerate(self.layers):
-            h_hyper = attn[0](h_domonate_list[i], h_a, h_v, h_hyper)
+            h_hyper = attn[0](h_domonate_list[i], h_a, h_hyper)
         return h_hyper
 
 
