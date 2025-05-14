@@ -16,8 +16,8 @@ device = torch.device("cuda" if USE_CUDA else "cpu")
 print(device)
 
 parser = argparse.ArgumentParser() 
-parser.add_argument('--config_file', type=str, default='') 
-parser.add_argument('--seed', type=int, default=-1) 
+parser.add_argument('--config_file', type=str, required=False, default='configs/train_special.yaml') 
+parser.add_argument('--seed', type=int, required=False, default=1111) 
 opt = parser.parse_args()
 print(opt)
 
@@ -78,8 +78,8 @@ def train(model, train_loader, optimizer, loss_fn, epoch, metrics):
 
     model.train()
     for cur_iter, data in enumerate(train_loader):
-        complete_input = (data['vision'].to(device), data['audio'].to(device), data['text'].to(device))
-        incomplete_input = (data['vision_m'].to(device), data['audio_m'].to(device), data['text_m'].to(device))
+        complete_input = (data['audio'].to(device), data['text'].to(device))
+        incomplete_input = (data['audio_m'].to(device), data['text_m'].to(device))
 
         sentiment_labels = data['labels']['M'].to(device)
         completeness_labels = 1. - data['labels']['missing_rate_l'].to(device)
